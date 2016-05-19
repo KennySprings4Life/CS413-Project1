@@ -48,6 +48,7 @@ wandContainer.interactive = true;
 wandContainer.visible = false;
 
 var waterIcon = new PIXI.Sprite.fromImage("waterSprite.png");
+waterIcon.interactive = true;
 waterIcon.anchor.x = 0.5;
 waterIcon.anchor.y = 0.5;
 waterIcon.position.x = 45;
@@ -56,6 +57,7 @@ waterIcon.position.y = -16;
 wandContainer.addChild(waterIcon);
 
 var fireIcon = new PIXI.Sprite.fromImage("fireSprite.png");
+fireIcon.interactive = true;
 fireIcon.anchor.x = 0.5;
 fireIcon.anchor.y = 0.5;
 fireIcon.position.x = 45;
@@ -79,15 +81,19 @@ wandIcon.addChild(wandContainer);
 
 //
 var monsterContainer = new PIXI.Container();
+monsterContainer.numMonsters = 3;
 stage.addChild(monsterContainer);
+
 
 
 //Generate the body of the 'Eye Monster'
 var evilEyeBody = new PIXI.Sprite.fromImage("EyeMonster-Body.png"); 
+evilEyeBody.interactive = true;
 evilEyeBody.anchor.x = 0.5;
 evilEyeBody.anchor.y = 0.5;
 evilEyeBody.position.x = 400;
 evilEyeBody.position.y = 280;
+evilEyeBody.health = 100;
 monsterContainer.addChild(evilEyeBody);
 
 //Generate the Eye of the 'Eye Monster' seperately so that the eye can be animated later.
@@ -99,19 +105,44 @@ evilEye.position.y = -4;
 evilEyeBody.addChild(evilEye);
 
 var evilHead = new PIXI.Sprite.fromImage("HeadMonster-50px_Green.png");
+evilHead.interactive = true;
 evilHead.anchor.x = 0;
 evilHead.anchor.y = 0;
 evilHead.position.x = 400;
 evilHead.position.y = 180;
+evilHead.health = 100;
 monsterContainer.addChild(evilHead);
 
 var evilWheel = new PIXI.Sprite.fromImage("WheelRuin-50px.png");
+evilWheel.interactive = true;
 evilWheel.anchor.x = 0.5;
 evilWheel.anchor.y = 0.5;
 evilWheel.position.x = 500;
 evilWheel.position.y = 250;
+evilWheel.health = 100;
 monsterContainer.addChild(evilWheel);
 
+
+var healthBars = new PIXI.Container();
+healthBars.position.x = 250;
+healthBars.position.y = -75;
+
+var wheelHealth = new PIXI.Text("Wheel: "+evilWheel.health, {fill: 0xFFFF00, font: 'bold 15px Arial'});
+wheelHealth.anchor.x = 0;
+wheelHealth.anchor.y = 0;
+healthBars.addChild(wheelHealth);
+
+var headHealth = new PIXI.Text(evilHead.health, {fill: 0xFFFF00});
+headHealth.anchor.x = 0;
+headHealth.anchor.y = 0;
+healthBars.addChild(headHealth);
+
+var eyeHealth = new PIXI.Text(evilEye.health, {fill: 0xFFFF00});
+eyeHealth.anchor.x = 0;
+eyeHealth.anchor.y = 0;
+healthBars.addChild(eyeHealth);
+
+optionsBarSprite.addChild(healthBars);
 
 //Attack Icon Mouse Handlers
 function mouseHandlerSwordIcon(e) {
@@ -122,17 +153,13 @@ function mouseHandlerSwordIcon(e) {
 
 function mouseHandlerWandIcon(e) {
 	wandContainer.visible = true;
-	hero.attackType = "wand/null";
-	monsterContainer.interactive = false;
 }
 function mouseHandlerFireIcon(e) {
 	hero.attackType = "fire";
-	monsterContainer.interactive = true;
 }
 
 function mouseHandlerWaterIcon(e) {
 	hero.attackType = "water";
-	monsterContainer.interactive = true;
 }
 
 //Attack Icon listeners
@@ -142,14 +169,84 @@ fireIcon.on('mousedown', mouseHandlerFireIcon);
 waterIcon.on('mousedown', mouseHandlerWaterIcon);
 
 
+function attack(){
+	animateHero('+');
+	setTimeout(function(){ animateHero("-"); }, 250);
+	if(hero.attackType == "sword"){
+		if(hero.enemy == evilWheel){
+			evilWheel.health -= 5;
+			window.alert(evilWheel.health);
+		}else if(hero.enemy == evilHead){
+			evilHead.health -= 45;
+			window.alert(evilHead.health);
+		}else{		//hero.enemy == evilEye;
+			evilEyeBody.health -= 10;
+			window.alert(evilEyeBody.health);
+		}
+	}else if(hero.attackType == "fire"){
+		if (hero.enemy == evilWheel){
+			evilWheel.health -= 45;
+			window.alert(evilWheel.health);
+		}else if(hero.enemy == evilHead){
+			evilHead.health -= 15;
+			window.alert(evilHead.health);
+		}else{//hero.enemy == evilEye;
+			evilEyeBody.health += 20;
+			window.alert(evilEyeBody.health);
+		}
+	}else{//hero.attackType == water;
+		if(hero.enemy == evilWheel){
+			evilWheel.health -= 10;
+			window.alert(evilWheel.health);
+		}else if(hero.enemy == evilHead){
+			evilHead.health += 20;
+			window.alert(evilHead.health);
+		}else{		//hero.enemy == evilEye;
+			evilEyeBody.health = -45;
+			window.alert(evilEyeBody.health);
+		}
+	}
+	if(evilEyeBody.health <= 0){
+		evilEyeBody.destroy();
+		monsterContainer.removeChild(evilEyeBody);
+	}
+	if(evilHead.health <= 0){
+		evilHead.destroy();
+		monsterContainer.removeChild(evilHead);
+	}
+	if(evilWheel.health <= 0){
+		evilWheel.destroy();
+		monsterContainer.removeChild(evilWheel);
+	}
+	if(monsterContainer.numMonsters <= 0){
+		//Win
+	}else{
+		hero.health -= 7*monsterContainer.numMonsters;
+	}
+}
+
+
+
 function mouseHandlerEye(e) {
-	hero.enemy = evilEye;
+	hero.enemy = evilEyeBody;
+	//window.alert(hero.attackType);
+	if(hero.attackType != "null"){
+		backWallSprite.visible = false;
+		attack();
+	}
+	
 }
 function mouseHandlerHead(e) {
 	hero.enemy = evilHead;
+	if(hero.attackType != "null"){
+		attack();
+	}
 }
 function mouseHandlerWheel(e) {
 	hero.enemy = evilWheel;
+	if(hero.attackType != "null"){
+		attack();
+	}
 }
 
 //Monster Sprite Mouse Handlers
@@ -158,13 +255,21 @@ evilHead.on('mousedown', mouseHandlerHead);
 evilWheel.on('mousedown', mouseHandlerWheel);
 
 
-
-
 //Sprite Animations
+function animateHero(direction) {
+	if(direction == "+"){
+		hero.position.x += 10;
+		renderer.render(stage);
+	}else{
+		hero.position.x -= 10;
+		renderer.render(stage);
+	}
+	
+}
+
 function animate() {
 	requestAnimationFrame(animate);
 	evilWheel.rotation += 0.01;
-	
 	renderer.render(stage);
 	
 }
